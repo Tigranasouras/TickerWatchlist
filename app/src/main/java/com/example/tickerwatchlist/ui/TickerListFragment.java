@@ -5,7 +5,6 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.Toast;
@@ -22,7 +21,10 @@ public class TickerListFragment extends Fragment {
         void onTickerSelected(String symbol);
     }
 
-    private OnTickerSelected callback;
+    public OnTickerSelected callback;
+
+    private ArrayAdapter<String> adapter;
+    private final java.util.ArrayList<String> data = new java.util.ArrayList<>();
 
     @Override
     public void onAttach(@NonNull Context context) {
@@ -36,7 +38,9 @@ public class TickerListFragment extends Fragment {
 
     @Nullable
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater,
+                             @Nullable ViewGroup container,
+                             @Nullable Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_ticker_list, container, false);
     }
 
@@ -44,20 +48,27 @@ public class TickerListFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         ListView listView = view.findViewById(R.id.ticker_list);
 
-        final String[] defaults = {"NEE", "AAPL", "DIS"};
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(
-                requireContext(),
-                android.R.layout.simple_list_item_1,
-                defaults
-        );
+        data.clear();
+        data.add("NEE");
+        data.add("AAPL");
+        data.add("DIS");
+
+        adapter = new ArrayAdapter<>(requireContext(),
+                android.R.layout.simple_list_item_1, data);
         listView.setAdapter(adapter);
 
-        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override public void onItemClick(AdapterView<?> parent, View v, int pos, long id) {
-                String symbol = adapter.getItem(pos);
-                Toast.makeText(requireContext(), "Opening " + symbol, Toast.LENGTH_SHORT).show();
-                if (callback != null) callback.onTickerSelected(symbol);
-            }
+        listView.setOnItemClickListener((parent, v, position, id) -> {
+            String symbol = adapter.getItem(position);
+            Toast.makeText(requireContext(), "Opening " + symbol, Toast.LENGTH_SHORT).show();
+            if (callback != null) callback.onTickerSelected(symbol);
         });
+    }
+
+    public void addTickerFromSms(String symbol) {
+        String up = symbol.toUpperCase();
+        if (data.contains(up)) return;
+        if (data.size() < 6) data.add(up);
+        else data.set(5, up);
+        if (adapter != null) adapter.notifyDataSetChanged();
     }
 }
